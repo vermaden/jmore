@@ -12,6 +12,13 @@ Also because - if You do now want to use full blown `jail(8)` manager such as Ba
 
 I also needed a tool that will allow me to fast start/stop/restart FreeBSD `jail(8)` containers with minimal typing - more time to focus on what matters.
 
+### Does it support listing BastilleBSD Jails?
+
+Yes - it reads `/usr/local/etc/bastille/bastille.conf` config and also checks `BAST_DIR` for `jail(8)` containers.
+
+
+## Description
+
 Usage `help` info from the `jless(8)` command below.
 
 ```
@@ -28,6 +35,7 @@ manage:
   jless.sh JAILNAME start
   jless.sh JAILNAME restart
   jless.sh JAILNAME stop
+  jless.sh JAILNAME status
   jless.sh JAILNAME console
   jless.sh JAILNAME shell
   jless.sh JAILNAME jexec
@@ -37,6 +45,7 @@ shorts:
   jless.sh JAILNAME d   DOWN ----> alias for stop
   jless.sh JAILNAME r   RESTART -> alias for restart
   jless.sh JAILNAME c   CONSOLE -> alias for console|shell|jexec
+  jless.sh JAILNAME s   STATUS --> alias for status
 ```
 
 ... and some fancy ASCII logo.

@@ -40,18 +40,20 @@ __usage() {
   echo "  ${NAME} version    show version"
   echo
   echo "manage:"
-  echo "  ${NAME} JAILNAME start"
-  echo "  ${NAME} JAILNAME restart"
-  echo "  ${NAME} JAILNAME stop"
-  echo "  ${NAME} JAILNAME console"
-  echo "  ${NAME} JAILNAME shell"
-  echo "  ${NAME} JAILNAME jexec"
+  echo "  ${NAME} <JAILNAME> start"
+  echo "  ${NAME} <JAILNAME> restart"
+  echo "  ${NAME} <JAILNAME> stop"
+  echo "  ${NAME} <JAILNAME> status"
+  echo "  ${NAME} <JAILNAME> console"
+  echo "  ${NAME} <JAILNAME> shell"
+  echo "  ${NAME} <JAILNAME> jexec"
   echo
   echo "shorts:"
-  echo "  ${NAME} JAILNAME u   UP ------> alias for start"
-  echo "  ${NAME} JAILNAME d   DOWN ----> alias for stop"
-  echo "  ${NAME} JAILNAME r   RESTART -> alias for restart"
-  echo "  ${NAME} JAILNAME c   CONSOLE -> alias for console|shell|jexec"
+  echo "  ${NAME} <JAILNAME> u   UP ------> alias for start"
+  echo "  ${NAME} <JAILNAME> d   DOWN ----> alias for stop"
+  echo "  ${NAME} <JAILNAME> r   RESTART -> alias for restart"
+  echo "  ${NAME} <JAILNAME> c   CONSOLE -> alias for console|shell|jexec"
+  echo "  ${NAME} <JAILNAME> s   STATUS --> alias for status"
   echo
 
   exit 1
