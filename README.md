@@ -27,36 +27,36 @@ Yes - its a modified and improved version of `https://github.com/vermaden/script
 Usage `help` info from the `jless(8)` command below.
 
 ```
-% jless.sh help
+% jless help
 usage:
-  jless.sh            list jail(8) containers
-  jless.sh -a         list jail(8) containers with all IP(s)
-  jless.sh -h         show help
-  jless.sh --help     show help
-  jless.sh help       show help
-  jless.sh version    show version
+  jless            list jail(8) containers
+  jless -a         list jail(8) containers with all IP(s)
+  jless -h         show help
+  jless --help     show help
+  jless help       show help
+  jless version    show version
 
 manage:
-  jless.sh <JAILNAME> start
-  jless.sh <JAILNAME> restart
-  jless.sh <JAILNAME> stop
-  jless.sh <JAILNAME> status
-  jless.sh <JAILNAME> console
-  jless.sh <JAILNAME> shell
-  jless.sh <JAILNAME> jexec
+  jless <JAILNAME> start
+  jless <JAILNAME> restart
+  jless <JAILNAME> stop
+  jless <JAILNAME> status
+  jless <JAILNAME> console
+  jless <JAILNAME> shell
+  jless <JAILNAME> jexec
 
 shorts:
-  jless.sh <JAILNAME> u   UP ------> alias for start
-  jless.sh <JAILNAME> d   DOWN ----> alias for stop
-  jless.sh <JAILNAME> r   RESTART -> alias for restart
-  jless.sh <JAILNAME> c   CONSOLE -> alias for console|shell|jexec
-  jless.sh <JAILNAME> s   STATUS --> alias for status
+  jless <JAILNAME> u   UP ------> alias for start
+  jless <JAILNAME> d   DOWN ----> alias for stop
+  jless <JAILNAME> r   RESTART -> alias for restart
+  jless <JAILNAME> c   CONSOLE -> alias for console|shell|jexec
+  jless <JAILNAME> s   STATUS --> alias for status
 ```
 
 ... and some fancy ASCII logo.
 
 ```
-% jless.sh help
+% jless help
              ___                    __ ____ __
         ___ /  /                   / //    \\ \
        /__//  / ____  _____ _____ / //  /  / \ \
