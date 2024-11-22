@@ -55,4 +55,24 @@ jless(8) 0.1 2024/11/22
 
 ```
 
+Example output from `jless(8)` listing usage.
+
+```
+% jless
+JAIL       JID  TYPE  VER     DIR                    IFACE     IP(s)
+----       ---  ----  ---     ---                    -----     -----
+classic    5    std   13.2-R  /jail/classic          em0       10.0.0.199/32
+fbsdjail   -    std   13.1-R  /jail/fbsdjail         wlan0     10.0.0.43
+ctld-two   -    vnet  13.2-R  /jail/ctld-two         ${if}b    -
+ctld       -    vnet  13.2-R  /jail/ctld             ${if}b    -
+iscsi      -    vnet  13.2-R  /jail/iscsi            ${if}b    -
+minecraft  -    std   -       [GONE]/jail/minecraft  em0       10.0.0.210
+minio      -    std   14.0-R  /jail/minio            em0       10.0.0.133
+nfsd       3    vnet  14.1-R  /jail/nfsd             epair99b  10.1.1.99/24
+other      -    std   14.1-R  /jail/other            em0       10.0.0.199
+sambajail  -    vnet  14.1-R  /jail/sambajail        ${if}b    -
+unfs3      -    vnet  14.1-R  /jail/unfs3            ${if}b    -
+
+```
+
 EOF
