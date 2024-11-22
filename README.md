@@ -37,20 +37,20 @@ usage:
   jless.sh version    show version
 
 manage:
-  jless.sh JAILNAME start
-  jless.sh JAILNAME restart
-  jless.sh JAILNAME stop
-  jless.sh JAILNAME status
-  jless.sh JAILNAME console
-  jless.sh JAILNAME shell
-  jless.sh JAILNAME jexec
+  jless.sh <JAILNAME> start
+  jless.sh <JAILNAME> restart
+  jless.sh <JAILNAME> stop
+  jless.sh <JAILNAME> status
+  jless.sh <JAILNAME> console
+  jless.sh <JAILNAME> shell
+  jless.sh <JAILNAME> jexec
 
 shorts:
-  jless.sh JAILNAME u   UP ------> alias for start
-  jless.sh JAILNAME d   DOWN ----> alias for stop
-  jless.sh JAILNAME r   RESTART -> alias for restart
-  jless.sh JAILNAME c   CONSOLE -> alias for console|shell|jexec
-  jless.sh JAILNAME s   STATUS --> alias for status
+  jless.sh <JAILNAME> u   UP ------> alias for start
+  jless.sh <JAILNAME> d   DOWN ----> alias for stop
+  jless.sh <JAILNAME> r   RESTART -> alias for restart
+  jless.sh <JAILNAME> c   CONSOLE -> alias for console|shell|jexec
+  jless.sh <JAILNAME> s   STATUS --> alias for status
 ```
 
 ... and some fancy ASCII logo.
