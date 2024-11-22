@@ -2,6 +2,7 @@
 FreeBSD Jail listing and managing utility.
 
 ## FAQ
+
 ### Why `jless(8)` name?
 Because that is the closest thing to FreeBSD base system `jls(8)` command and it has some reference for other known `less(8)` command.
 
@@ -15,6 +16,10 @@ I also needed a tool that will allow me to fast start/stop/restart FreeBSD `jail
 ### Does it support listing BastilleBSD Jails?
 
 Yes - it reads `/usr/local/etc/bastille/bastille.conf` config and also checks `BAST_DIR` for `jail(8)` containers.
+
+### Is it tested?
+
+Yes - its a modified and improved version of `https://github.com/vermaden/scripts/blob/master/jails.sh` that I already used for quite some time.
 
 
 ## Description
