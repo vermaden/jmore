@@ -1,10 +1,17 @@
-# jless(8)
+# jmore(8)
 FreeBSD Jail listing and managing utility.
 
 ## FAQ
 
-### Why `jless(8)` name?
+### Why `jmore(8)` name?
+Initially it was named `jless(8) and below is the reasoning for that choice ...
+
 Because that is the closest thing to FreeBSD base system `jls(8)` command and it has some reference for other known `less(8)` command.
+
+But **seschwar** from `lobste.rs` page made me aware that there already is a `jless` project available - command line JSON viewer written in Rust - thank You for that.
+
+So as `less(8)` is `more(8)` and `more(8)` is `less(8)` - I took the decision to rename it from `jless(8)` to `jmore(8)` to avoid confusion.
+
 
 ### Why another `jail(8)` containers listing/managing tool?
 Because builtin `jls(8)` is very limited and does not display VNET IP(s) and interfaces.
@@ -24,55 +31,55 @@ Yes - its a modified and improved version of `https://github.com/vermaden/script
 
 ## Description
 
-Usage `help` info from the `jless(8)` command below.
+Usage `help` info from the `jmore(8)` command below.
 
 ```
-% jless help
+% jmore help
 usage:
-  jless            list jail(8) containers
-  jless -a         list jail(8) containers with all IP(s)
-  jless -h         show help
-  jless --help     show help
-  jless help       show help
-  jless version    show version
+  jmore            list jail(8) containers
+  jmore -a         list jail(8) containers with all IP(s)
+  jmore -h         show help
+  jmore --help     show help
+  jmore help       show help
+  jmore version    show version
 
 manage:
-  jless <JAILNAME> start
-  jless <JAILNAME> restart
-  jless <JAILNAME> stop
-  jless <JAILNAME> status
-  jless <JAILNAME> console
-  jless <JAILNAME> shell
-  jless <JAILNAME> jexec
+  jmore <JAILNAME> start
+  jmore <JAILNAME> restart
+  jmore <JAILNAME> stop
+  jmore <JAILNAME> status
+  jmore <JAILNAME> console
+  jmore <JAILNAME> shell
+  jmore <JAILNAME> jexec
 
 shorts:
-  jless <JAILNAME> u   UP ------> alias for start
-  jless <JAILNAME> d   DOWN ----> alias for stop
-  jless <JAILNAME> r   RESTART -> alias for restart
-  jless <JAILNAME> c   CONSOLE -> alias for console|shell|jexec
-  jless <JAILNAME> s   STATUS --> alias for status
+  jmore <JAILNAME> u   UP ------> alias for start
+  jmore <JAILNAME> d   DOWN ----> alias for stop
+  jmore <JAILNAME> r   RESTART -> alias for restart
+  jmore <JAILNAME> c   CONSOLE -> alias for console|shell|jexec
+  jmore <JAILNAME> s   STATUS --> alias for status
 ```
 
 ... and some fancy ASCII logo.
 
 ```
-% jless help
-             ___                    __ ____ __
-        ___ /  /                   / //    \\ \
-       /__//  / ____  _____ _____ / //  /  / \ \
-      /  //  / /  _ \/  __//  __// / \     \ / /
-     /  //  /_/  ___/\__  \\__  \\ \ /  /  // /
-  __/  / \____\____/ /____//____/ \_\\____//_/
+% jmore help
+                                          __ ____ __
+        ___                              / //    \\ \
+       /__/__ __ _   ____   __ __ ____  / //  /  / \ \
+      /  //       \ /    \ /  /_//  _ \/ / \     \ / /
+     /  //  /  /  //  /  //  /  /  ___/\ \ /  /  // /
+  __/  //__/__/__/ \____//__/   \____/  \_\\____//_/
  /____/
 
-jless(8) 0.1 2024/11/22
+jmore(8) 0.1 2024/11/22
 
 ```
 
-Example output from `jless(8)` listing usage.
+Example output from `jmore(8)` listing usage.
 
 ```
-% jless
+% jmore
 JAIL       JID  TYPE  VER     DIR                    IFACE     IP(s)
 ----       ---  ----  ---     ---                    -----     -----
 classic    5    std   13.2-R  /jail/classic          em0       10.0.0.199/32
