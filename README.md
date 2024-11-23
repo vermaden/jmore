@@ -4,7 +4,7 @@ FreeBSD Jail listing and managing utility.
 ## FAQ
 
 ### Why `jmore(8)` name?
-Initially it was named `jless(8) and below is the reasoning for that choice ...
+Initially it was named `jless(8)` and below is the reasoning for that choice ...
 
 Because that is the closest thing to FreeBSD base system `jls(8)` command and it has some reference for other known `less(8)` command.
 
