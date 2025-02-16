@@ -91,8 +91,6 @@ case ${#} in
          "${1}" =  "-version" -o \
          "${1}" =   "version" ]
     then
-
-
       echo "                                          __ ____ __"
       echo "        ___                              / //    \\\\ \\"
       echo "       /__/__ __ _   ____   __ __ ____  / //  /  / \\ \\"
@@ -101,7 +99,7 @@ case ${#} in
       echo "  __/  //__/__/__/ \\____//__/   \\____/  \\_\\\\____//_/"
       echo " /____/"
       echo
-      echo "jmore(8) 0.1 2024/11/22"
+      echo "jmore(8) 0.2 2025/02/15"
       echo
       exit 0
     fi
@@ -121,7 +119,7 @@ case ${#} in
       (d|stop)   ${DOAS} service jail onestop    ${1} ;;
       (s|status) ${DOAS} service jail onestatus  ${1} ;;
       (c|console|shell|jexec)
-        env PS1="${1} # " ${DOAS} jexec ${1}
+        env PS1="${1} # " PS2="> " ${DOAS} jexec ${1}
         ;;
     esac
     exit 0
@@ -178,17 +176,18 @@ fi
                    | sed -e "s.\${name}.${JAIL}.g" \
                          -e "s.\$name.${JAIL}.g" \
                    | tr -d '"' )
-          if [ ! -d "${DIR}" ]
-          then
-            DIR="[GONE]${DIR}"
-          fi
         fi
 
-        VER=$( chroot ${DIR} freebsd-version -u 2> /dev/null \
+        VER=$( ${DIR}/bin/freebsd-version -u 2> /dev/null \
                  | sed -e s.RELEASE.R.g \
                        -e s.CURRENT.C.g \
                        -e s.STABLE.S.g \
                        -e s.BETA.B.g )
+
+        if [ ! -d "${DIR}" ]
+        then
+          DIR="[GONE]${DIR}"
+        fi
 
         IPS=$( jexec ${JAIL} env IFCONFIG_FORMAT=inet:cidr ifconfig 2> /dev/null \
                  | grep 'inet ' \
