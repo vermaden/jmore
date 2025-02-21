@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright (c) 2023-2024 Slawomir Wojciech Wojtczak (vermaden)
+# Copyright (c) 2023-2025 Slawomir Wojciech Wojtczak (vermaden)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,7 @@ __usage() {
   exit 1
 }
 
-# display only 3 first interfaces
+# DISPLAY ONLY 3 FIRST INTERFACES
 __interfaces_limit() {
   if [ $( echo "${IFACE}" | wc -l | tr -d ' ' ) -gt 3 ]
   then
@@ -70,23 +70,28 @@ __interfaces_limit() {
   fi
 }
 
-# check doas(1) presense
+# CHECK doas(1) AND/OR sudo(8) EXISTENCE
 unalias doas
+unalias sudo
 if which doas 1> /dev/null 2> /dev/null
 then
   DOAS=doas
+elif which sudo 1> /dev/null 2> /dev/null
+then
+  DOAS=sudo
 else
   DOAS=''
 fi
 
+# CHECK PASSED ARGUMENTS
 case ${#} in
   (0)
-    # do nothing and just display list of jails
+    # DO NOTHING AND JUST DISPLAY LIST OF JAILS
     :
     ;;
 
   (1)
-    # display version
+    # DISPLAY VERSION
     if [ "${1}" = "--version" -o \
          "${1}" =  "-version" -o \
          "${1}" =   "version" ]
@@ -104,12 +109,12 @@ case ${#} in
       exit 0
     fi
 
-    # display help if needed
+    # DISPLAY HELP IF NEEDED
     case ${1} in
       (-h|--h|help|-help|--help) __usage ;;
     esac
 
-    # do full listing with all interfaces and IP addresses
+    # DO FULL LISTING WITH ALL INTERFACES AND IP ADDRESSES
     [ "${1}" = "-a" ] && FULL_LISTING=1
     ;;
 
