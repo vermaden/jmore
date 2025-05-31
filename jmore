@@ -149,8 +149,9 @@ then
 fi
 
 (
-  echo "JAIL JID TYPE VER DIR IFACE IP(s)"
-  echo "---- --- ---- --- --- ----- -----"
+  printf "%-28s %-4s %-5s %-7s %-15s %-15s %s\n" "JAIL" "JID" "TYPE" "VER" "DIR" "IFACE" "IP(s)"
+  printf "%-28s %-4s %-5s %-7s %-15s %-15s %s\n" "----" "---" "----" "---" "---" "-----" "-----"
+
   grep -h '^[^#]' \
     /etc/jail.conf \
     /etc/jail.conf.d/* \
@@ -194,12 +195,11 @@ fi
           DIR="[GONE]${DIR}"
         fi
 
-        IPS=$( jexec ${JAIL} env IFCONFIG_FORMAT=inet:cidr ifconfig 2> /dev/null \
-                 | grep 'inet ' \
-                 | grep -v 127.0.0.1 \
-                 | awk '{print $2}' \
-                 | tr '\n' '+' \
-                 | sed '$s/.$//' )
+        IPS=$( jexec "${JAIL}" ifconfig 2>/dev/null \
+          | awk '
+              $1 == "inet"  && $2 != "127.0.0.1"            { print $2 }
+              $1 == "inet6" && $2 !~ /^fe80/ && $2 != "::1" { print $2 }
+            ' | tr '\n' '+' | sed 's/+$//' )
 
         TYPE=$( jexec ${JAIL} sysctl -n security.jail.vnet 2> /dev/null )
 
@@ -273,9 +273,16 @@ EOF_IP
         [ "${IPS}"   = "" ] && IPS='-'
         [ "${VER}"   = "" ] && VER='-'
 
-        echo ${JAIL} ${JID} ${TYPE} ${VER} ${DIR} ${IFACE} ${IPS}
+        FIRST_IP=$( echo "${IPS}" | tr '+' '\n' | head -1 )
+        REST_IPS=$( echo "${IPS}" | tr '+' '\n' | tail -n +2 )
+
+        printf "%-28s %-4s %-5s %-7s %-15s %-15s %s\n" "${JAIL}" "${JID}" "${TYPE}" "${VER}" "${DIR}" "${IFACE}" "${FIRST_IP}"
+
+        for ip in ${REST_IPS}; do
+          printf "%80s%s\n" "" "$ip"  # 80 = width of 6 previous fields
+        done
 
         unset JAIL JID TYPE VER DIR IFACE IPS
 
       done
-) | column -t
+)
