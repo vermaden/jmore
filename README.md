@@ -72,7 +72,7 @@ shorts:
   __/  //__/__/__/ \____//__/   \____/  \_\\____//_/
  /____/
 
-jmore(8) 0.1 2024/11/22
+jmore(8) 0.3 2025/07/23
 
 ```
 
@@ -80,20 +80,19 @@ Example output from `jmore(8)` listing usage.
 
 ```
 % jmore
-JAIL       JID  TYPE  VER     DIR                    IFACE     IP(s)
-----       ---  ----  ---     ---                    -----     -----
-classic    5    std   13.2-R  /jail/classic          em0       10.0.0.199/32
-fbsdjail   -    std   13.1-R  /jail/fbsdjail         wlan0     10.0.0.43
-ctld-two   -    vnet  13.2-R  /jail/ctld-two         ${if}b    -
-ctld       -    vnet  13.2-R  /jail/ctld             ${if}b    -
-iscsi      -    vnet  13.2-R  /jail/iscsi            ${if}b    -
-minecraft  -    std   -       [GONE]/jail/minecraft  em0       10.0.0.210
-minio      -    std   14.0-R  /jail/minio            em0       10.0.0.133
-nfsd       3    vnet  14.1-R  /jail/nfsd             epair99b  10.1.1.99/24
-other      -    std   14.1-R  /jail/other            em0       10.0.0.199
-sambajail  -    vnet  14.1-R  /jail/sambajail        ${if}b    -
-unfs3      -    vnet  14.1-R  /jail/unfs3            ${if}b    -
-
+     JAIL JID CPU/% RAM/mb TYPE    VER DIR                  IFACE IP(s)
+  classic   7   0.0   18.0  std 13.2-R /jail/classic          em0 10.0.0.199/32
+ ctld-two   -   0.0    0.0 vnet 13.2-R /jail/ctld-two      ${if}b -
+     ctld   -   0.0    0.0 vnet 13.2-R /jail/ctld          ${if}b -
+ fbsdjail   -   0.0    0.0  std 13.1-R /jail/fbsdjail       wlan0 10.0.0.43
+    iscsi   -   0.0    0.0 vnet 13.2-R /jail/iscsi         ${if}b -
+joudriere   5   0.0   32.0 vnet 14.3-R /jail/joudriere  epair234b 10.1.1.0/24
+minecraft   8   1.1 1069.3  std 14.2-R /jail/minecraft        em0 10.0.0.210/32
+    minio   3   0.0  359.2  std 14.0-R /jail/minio            em0 10.0.0.133/32
+     nfsd   -   0.0    0.0 vnet 14.1-R /jail/nfsd          ${if}b -
+    other   2   0.0    5.0  std 14.1-R /jail/other            em0 10.0.0.199/32
+sambajail   -   0.0    0.0 vnet 14.1-R /jail/sambajail     ${if}b -
+    unfs3   4   0.0   10.2 vnet 14.1-R /jail/unfs3       epair88b 10.1.1.0/24
 ```
 
 EOF

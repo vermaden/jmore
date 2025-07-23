@@ -28,7 +28,7 @@
 # vermaden [AT] interia [DOT] pl
 # https://vermaden.wordpress.com
 
-# display usage information
+# DISPLAY USAGE INFORMATION
 __usage() {
   local NAME=${0##*/}
   echo "usage:"
@@ -104,7 +104,7 @@ case ${#} in
       echo "  __/  //__/__/__/ \\____//__/   \\____/  \\_\\\\____//_/"
       echo " /____/"
       echo
-      echo "jmore(8) 0.2 2025/02/15"
+      echo "jmore(8) 0.3 2025/07/23"
       echo
       exit 0
     fi
@@ -119,6 +119,7 @@ case ${#} in
     ;;
 
   (2)
+    # MANAGE/OPERATE JAILS
     case ${2} in
       (u|start)  ${DOAS} service jail onestart   ${1} ;;
       (d|stop)   ${DOAS} service jail onestop    ${1} ;;
@@ -131,13 +132,17 @@ case ${#} in
     ;;
 
   (*)
+    # DISPLAY USAGE INFORMATION
     __usage
     ;;
 esac
 
+# SETTINGS AND INITIAL INFORMATION GATHERING
 JLS=$( jls 2> /dev/null )
-IFCONFIG=$( env IFCONFIG_FORMAT=inet:cidr ifconfig -l ether 2> /dev/null )
+IFCONFIG=$( netstat -Win -f inet | sed 1d | awk '{print $1}' | uniq | tr '\n' ' ' )
+WIDTH_END=0
 
+# FIND AND SET bastille_prefix FOR BastilleBSD JAILS
 eval $( grep '^[^#]' /usr/local/etc/bastille/bastille.conf 2> /dev/null \
           | grep -m 1 bastille_prefix \
           | awk '{print $1}' )
@@ -148,134 +153,188 @@ then
   unset bastille_prefix
 fi
 
-(
-  echo "JAIL JID TYPE VER DIR IFACE IP(s)"
-  echo "---- --- ---- --- --- ----- -----"
-  grep -h '^[^#]' \
-    /etc/jail.conf \
-    /etc/jail.conf.d/* \
-    "${BAST_DIR}"/jails/*/jail.conf 2> /dev/null \
-    | grep -h -E '[[:space:]]*[[:alnum:]][[:space:]]*\{' \
-    | tr -d '\ \t{' \
-    | while read JAIL
+# GET LIST OF JAILS NAMES
+JAILS=$( grep -h '^[^#]' \
+           /etc/jail.conf \
+           /etc/jail.conf.d/* \
+           "${BAST_DIR}"/jails/*/jail.conf 2> /dev/null \
+           | grep -h -E '[[:space:]]*[[:alnum:]][[:space:]]*\{' \
+           | tr -d '\ \t{' )
+
+# FIND THE WIDTH FOR JAIL NAME COLUMN
+while read JAIL
+do
+  WIDTH=${#JAIL}
+  if [ ${WIDTH_END} -lt ${WIDTH} ]
+  then
+    WIDTH_END=${WIDTH}
+  fi
+done << JAILS
+  "${JAILS}"
+JAILS
+
+# SET OUTPUT FORMAT
+FORMAT="%${WIDTH_END}s %3s %5s %6s %4s %6s %-$(( ${WIDTH_END} + 6 ))s %10s %s\n"
+
+# PRINT HEADER
+printf "${FORMAT}" JAIL JID "CPU/%" "RAM/mb" TYPE VER DIR IFACE "IP(s)"
+
+# PARSE JAILS INFORMATION
+while read JAIL
+do
+
+  # CHECK JAILS CONFIGS
+  CONFIG=$( grep -h '^[^#]' /etc/jail.conf \
+                            /etc/jail.conf.d/* \
+                            "${BAST_DIR}"/jails/*/jail.conf 2> /dev/null \
+              | grep -A 512 -E "[[:space:]]*${JAIL}*[[:space:]]*\{" \
+              | grep -B 512 -m 1 ".*[[:space:]]*\}[[:space:]]*$" )
+
+  # FIND JAIL DIR
+  DIR=$( echo "${JLS}" | awk '{print $NF}' | grep -E -e "/${JAIL}$" -e "/${JAIL}/root" )
+
+  if [ "${DIR}" = "" ]
+  then
+    DIR=$( grep -h '^[^#]' \
+              /etc/jail.conf \
+              /etc/jail.conf.d/* \
+              "${BAST_DIR}"/jails/*/jail.conf 2> /dev/null \
+              | grep -A 512 -h -E '[[:alnum:]][[:space:]]\{' \
+              | grep -m 1 path \
+              | awk '{print $NF}' \
+              | tr -d ';' \
+              | sed -e "s.\${name}.${JAIL}.g" \
+                    -e "s.\$name.${JAIL}.g" \
+              | tr -d '"' )
+  fi
+
+  # FIND JAIL VERSION
+  VER=$( ${DIR}/bin/freebsd-version -u 2> /dev/null \
+            | sed -e s.RELEASE.R.g \
+                  -e s.CURRENT.C.g \
+                  -e s.STABLE.S.g \
+                  -e s.BETA.B.g )
+
+  # IF DIR IS ABSENT THEN SET IT TO [GONE]
+  if [ ! -d "${DIR}" ]
+  then
+    DIR="[GONE]${DIR}"
+  fi
+
+  # FIND JAIL IP(s)
+  IPS=$( jexec ${JAIL} netstat -Win -f inet 2> /dev/null \
+            | sed 1d \
+            | awk '{print $3}' \
+            | grep -v '127.0.0.0/8' \
+            | tr '\n' '+' \
+            | sed '$s/.$//' )
+
+  # FIND JAIL TYPE
+  TYPE=$( jexec ${JAIL} sysctl -n security.jail.vnet 2> /dev/null )
+
+  case ${TYPE} in
+
+    (1)
+      TYPE=vnet
+      IFACE=$( jexec ${JAIL} netstat -Win -f inet | sed 1d | grep -v '127.0.0.0/8' | awk '{print $1}'  )
+
+      case ${FULL_LISTING} in
+
+        (1)
+          IFACE=$( echo "${IFACE}" | tr '\n' '/' | sed '$s/.$//' )
+          ;;
+
+        (*)
+          IPS=$( echo "${IPS}" | tr '+' '\n' | head -3 | tr '\n' '+' | sed '$s/.$//' )
+          __interfaces_limit
+          ;;
+
+      esac
+      ;;
+
+    (0)
+      TYPE=std
+      while read IP
       do
-
-        CONFIG=$( grep -h '^[^#]' /etc/jail.conf \
-                                  /etc/jail.conf.d/* \
-                                  "${BAST_DIR}"/jails/*/jail.conf 2> /dev/null \
-                    | grep -A 512 -E "[[:space:]]*${JAIL}*[[:space:]]*\{" \
-                    | grep -B 512 -m 1 ".*[[:space:]]*\}[[:space:]]*$" )
-
-        DIR=$( echo "${JLS}" | awk '{print $NF}' | grep -E -e "/${JAIL}$" -e "/${JAIL}/root" )
-
-        if [ "${DIR}" = "" ]
-        then
-          DIR=$( grep -h '^[^#]' \
-                   /etc/jail.conf \
-                   /etc/jail.conf.d/* \
-                   "${BAST_DIR}"/jails/*/jail.conf 2> /dev/null \
-                   | grep -A 512 -h -E '[[:alnum:]][[:space:]]\{' \
-                   | grep -m 1 path \
-                   | awk '{print $NF}' \
-                   | tr -d ';' \
-                   | sed -e "s.\${name}.${JAIL}.g" \
-                         -e "s.\$name.${JAIL}.g" \
-                   | tr -d '"' )
-        fi
-
-        VER=$( ${DIR}/bin/freebsd-version -u 2> /dev/null \
-                 | sed -e s.RELEASE.R.g \
-                       -e s.CURRENT.C.g \
-                       -e s.STABLE.S.g \
-                       -e s.BETA.B.g )
-
-        if [ ! -d "${DIR}" ]
-        then
-          DIR="[GONE]${DIR}"
-        fi
-
-        IPS=$( jexec ${JAIL} env IFCONFIG_FORMAT=inet:cidr ifconfig 2> /dev/null \
-                 | grep 'inet ' \
-                 | grep -v 127.0.0.1 \
-                 | awk '{print $2}' \
-                 | tr '\n' '+' \
-                 | sed '$s/.$//' )
-
-        TYPE=$( jexec ${JAIL} sysctl -n security.jail.vnet 2> /dev/null )
-
-        case ${TYPE} in
-
-          (1)
-            TYPE=vnet
-            IFACE=$( jexec ${JAIL} env IFCONFIG_FORMAT=inet:cidr ifconfig -l ether 2> /dev/null | tr ' ' '\n' )
-
-            case ${FULL_LISTING} in
-
-              (1)
-                IFACE=$( echo "${IFACE}" | tr '\n' '/' | sed '$s/.$//' )
-                ;;
-
-              (*)
-                IPS=$( echo "${IPS}" | tr '+' '\n' | head -3 | tr '\n' '+' | sed '$s/.$//' )
-                __interfaces_limit
-                ;;
-
-            esac
-            ;;
-
-          (0)
-            TYPE=std
-            while read IP
-            do
-              while read INTERFACE
-              do
-
-                if env IFCONFIG_FORMAT=inet:cidr ifconfig ${INTERFACE} 2> /dev/null | grep -q "inet ${IP}"
-                then
-                  IFACE=${INTERFACE}
-                  break
-                fi
-              done << EOF_INTERFACE
-$( echo "${IFCONFIG}" | tr ' ' '\n' )
+        while read INTERFACE
+        do
+          if netstat -Win -f inet | sed 1d | grep -v '127.0.0.0/8' | grep -q -- "- ${IP} "
+          then
+            IFACE=${INTERFACE}
+            break
+          fi
+        done << EOF_INTERFACE
+  $( echo "${IFCONFIG}" | tr ' ' '\n' )
 EOF_INTERFACE
-            done << EOF_IP
-$( echo "${IPS}" | tr '+' '\n' )
+      done << EOF_IP
+  $( echo "${IPS}" | tr '+' '\n' )
 EOF_IP
-            ;;
+      ;;
 
-          (*)
-            if echo "${CONFIG}" | grep -q 'vnet.interface'
-            then
-              TYPE=vnet
-              IFACE=$( echo "${CONFIG}" | grep 'vnet.interface' | awk '{print $NF}' | tr -d ';"' | tr ',' '\n' )
-              __interfaces_limit
-            else
-              TYPE=std
-              IFACE=$( echo "${CONFIG}" | grep 'interface' | awk '{print $NF}' | tr -d ';' | tr ',' '\n' )
-              __interfaces_limit
-              IPS=$( echo "${CONFIG}" | grep '\.addr' | awk '{print $NF}' | tr -d ';' )
-            fi
-            ;;
+    (*)
+      if echo "${CONFIG}" | grep -q 'vnet.interface'
+      then
+        TYPE=vnet
+        IFACE=$( echo "${CONFIG}" | grep 'vnet.interface' | awk '{print $NF}' | tr -d ';"' | tr ',' '\n' )
+        __interfaces_limit
+      else
+        TYPE=std
+        IFACE=$( echo "${CONFIG}" | grep 'interface' | awk '{print $NF}' | tr -d ';' | tr ',' '\n' )
+        __interfaces_limit
+        IPS=$( echo "${CONFIG}" | grep '\.addr' | awk '{print $NF}' | tr -d ';' )
+      fi
+      ;;
 
-        esac
+  esac
 
-        JID=$( echo "${JLS}" | grep -E -e "/${JAIL}$" -e "/${JAIL}/root" | awk '{print $1}' )
+  # GET JAIL JID
+  JID=$( echo "${JLS}" | grep -E -e "/${JAIL}$" -e "/${JAIL}/root" | awk '{print $1}' )
 
-        if ! jexec ${JAIL} echo / 1> /dev/null 2> /dev/null
-        then
-          JID=-
-        fi
+  # IF JAIL IS NOT RUNNING THEN SET JID TO '-' VALUE
+  if [ "${JID}" = "" ]
+  then
+    if ! jexec ${JAIL} echo / 1> /dev/null 2> /dev/null
+    then
+      JID=-
+    fi
+  fi
 
-        [ "${JID}"   = "" ] && JID='-'
-        [ "${TYPE}"  = "" ] && TYPE='-'
-        [ "${DIR}"   = "" ] && DIR='-'
-        [ "${IFACE}" = "" ] && IFACE='-'
-        [ "${IPS}"   = "" ] && IPS='-'
-        [ "${VER}"   = "" ] && VER='-'
+  # CALCULATE CPU/RAM USAGE
+  RAM=0
+  CPU=0
+  RESOURCES=$( ps -J ${JID} -o 'rss,%cpu' 2> /dev/null | sed 1d )
+  if [ "${RESOURCES}" != "" ]
+  then
+    while read RSS PER
+    do
+      RAM=$( echo "${RAM} + ${RSS}" | bc -l )
+      CPU=$( echo "${CPU} + ${PER}" | bc -l )
+    done << CPU_RAM
+  $( echo "${RESOURCES}" )
+CPU_RAM
+  fi
 
-        echo ${JAIL} ${JID} ${TYPE} ${VER} ${DIR} ${IFACE} ${IPS}
+  # CONVERT KILOBYTES TO MEGABYTES
+  RAM=$( echo "scale=1; ${RAM} / 1024" | bc -l )
+  RAM=$( printf "%3.1f" "${RAM}" )
+  CPU=$( printf "%3.1f" "${CPU}" )
 
-        unset JAIL JID TYPE VER DIR IFACE IPS
+  # LAST CHECKS BEFORE DISPLAY
+  [ "${JID}"   = "" ] && JID='-'
+  [ "${TYPE}"  = "" ] && TYPE='-'
+  [ "${DIR}"   = "" ] && DIR='-'
+  [ "${IFACE}" = "" ] && IFACE='-'
+  [ "${IPS}"   = "" ] && IPS='-'
+  [ "${VER}"   = "" ] && VER='-'
+  [ "${CPU}"   = "" ] && CPU='-'
+  [ "${RAM}"   = "" ] && RAM='-'
 
-      done
-) | column -t
+  # PRING GATHERED JAIL INFORMATION
+  printf "%${WIDTH_END}s %3s %5s %6s %4s %6s %-$(( ${WIDTH_END} + 6 ))s %10s %s\n" ${JAIL} ${JID} ${CPU} ${RAM} ${TYPE} ${VER} ${DIR} ${IFACE} ${IPS}
+
+  # UNSET VARIABLES FOR NEXT LOOP
+  unset JAIL JID TYPE VER DIR IFACE IPS CPU RAM
+
+done << JAILS
+  ${JAILS}
+JAILS
