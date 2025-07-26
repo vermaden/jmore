@@ -224,8 +224,8 @@ do
   # FIND JAIL IP(s)
   IPS=$( jexec ${JAIL} netstat -Win -f inet 2> /dev/null \
             | sed 1d \
-            | awk '{print $3}' \
-            | grep -v '127.0.0.0/8' \
+            | awk '{print $4}' \
+            | grep -v '127.0.0.1' \
             | tr '\n' '+' \
             | sed '$s/.$//' )
 
