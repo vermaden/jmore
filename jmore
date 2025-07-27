@@ -32,12 +32,13 @@
 __usage() {
   local NAME=${0##*/}
   echo "usage:"
-  echo "  ${NAME}            list jail(8) containers"
-  echo "  ${NAME} -a         list jail(8) containers with all IP(s)"
-  echo "  ${NAME} -h         show help"
-  echo "  ${NAME} --help     show help"
-  echo "  ${NAME} help       show help"
-  echo "  ${NAME} version    show version"
+  echo "  ${NAME}              list jail(8) containers"
+  echo "  ${NAME} -a           list jail(8) containers with all IP(s)"
+  echo "  ${NAME} -d INTERVAL  run '${NAME}' every INTERVAL seconds like top(1)"
+  echo "  ${NAME} -h           show help"
+  echo "  ${NAME} --help       show help"
+  echo "  ${NAME} help         show help"
+  echo "  ${NAME} version      show version"
   echo
   echo "manage:"
   echo "  ${NAME} <JAILNAME> start"
@@ -69,6 +70,51 @@ __interfaces_limit() {
     IFACE=$( echo "${IFACE}" | tr '\n' '/' | sed '$s/.$//' )
   fi
 }
+
+__buffer() {
+  # GET ALL OUTPUT INTO VARIABLE FOR FAST DISPLAY
+  BUFFER="INFO: running '${NAME}' in INTERVAL mode every '${1}' seconds
+EXIT: press and hold [CTRL]+[C] keys to end
+
+$( ${0} )"
+  echo "${BUFFER}"
+  BACK=$( echo "${BUFFER}" | wc -l )
+
+  # MOVE CURSOR BACK TO BEGINING INSTEAD clear(1) BUILTIN
+  seq ${BACK} | xargs -I- tput cuu1
+}
+
+# INTERVAL RUN
+if [ "${1}" = "-d" ]
+then
+  # CHECK IF INTERVAL IS NATURAL NUMBER
+  REGEX_NUMBER=$( echo ${2} | grep -E -o "[0-9]+" )
+  if [ "${2}" != "${REGEX_NUMBER}" ]
+  then
+    echo "NOPE: the INTERVAL must be natural number"
+    exit 1
+  fi
+
+  # UNHIDE CURSOR ON EXIT
+  trap 'tput cnorm' SIGINT SIGQUIT SIGHUP SIGTRAP SIGABRT SIGTERM
+
+  # HIDE CURSOR
+  tput civis
+
+  # CLEAR SCREEN ONE TIME
+  clear
+
+  # GET basename(1) NAME OF PROGRAM
+  NAME=${0##*/}
+
+  # RUN 'INTERVAL' LOOP
+  __buffer ${2}
+  while sleep ${2}
+  do
+    __buffer ${2}
+  done
+  exit 0
+fi
 
 # CHECK doas(1) AND/OR sudo(8) EXISTENCE
 unalias doas
@@ -104,7 +150,7 @@ case ${#} in
       echo "  __/  //__/__/__/ \\____//__/   \\____/  \\_\\\\____//_/"
       echo " /____/"
       echo
-      echo "jmore(8) 0.3 2025/07/23"
+      echo "jmore(8) 0.4 2025/07/26"
       echo
       exit 0
     fi
@@ -125,6 +171,11 @@ case ${#} in
       (d|stop)   ${DOAS} service jail onestop    ${1} ;;
       (s|status) ${DOAS} service jail onestatus  ${1} ;;
       (c|console|shell|jexec)
+        if ! jls -j bsdinstalljail 1> /dev/null 2> /dev/null
+        then
+          echo "NOPE: jail '${1}' is not running"
+          exit 1
+        fi
         env PS1="${1} # " PS2="> " ${DOAS} jexec ${1}
         ;;
     esac
@@ -140,7 +191,6 @@ esac
 # SETTINGS AND INITIAL INFORMATION GATHERING
 JLS=$( jls 2> /dev/null )
 IFCONFIG=$( netstat -Win -f inet | sed 1d | awk '{print $1}' | uniq | tr '\n' ' ' )
-WIDTH_END=0
 
 # FIND AND SET bastille_prefix FOR BastilleBSD JAILS
 eval $( grep '^[^#]' /usr/local/etc/bastille/bastille.conf 2> /dev/null \
@@ -161,45 +211,35 @@ JAILS=$( grep -h '^[^#]' \
            | grep -h -E '[[:space:]]*[[:alnum:]][[:space:]]*\{' \
            | tr -d '\ \t{' )
 
-# FIND THE WIDTH FOR JAIL NAME COLUMN
-while read JAIL
-do
-  WIDTH=${#JAIL}
-  if [ ${WIDTH_END} -lt ${WIDTH} ]
-  then
-    WIDTH_END=${WIDTH}
-  fi
-done << JAILS
-  "${JAILS}"
-JAILS
-
-# SET OUTPUT FORMAT
-FORMAT="%${WIDTH_END}s %3s %5s %6s %4s %6s %-$(( ${WIDTH_END} + 6 ))s %10s %s\n"
+# OUTPUT START
+(
 
 # PRINT HEADER
-printf "${FORMAT}" JAIL JID "CPU/%" "RAM/mb" TYPE VER DIR IFACE "IP(s)"
+echo JAIL JID "CPU/%" "RAM/mb" TYPE VER DIR IFACE "IP(s)"
 
 # PARSE JAILS INFORMATION
 while read JAIL
 do
 
   # CHECK JAILS CONFIGS
-  CONFIG=$( grep -h '^[^#]' /etc/jail.conf \
-                            /etc/jail.conf.d/* \
-                            "${BAST_DIR}"/jails/*/jail.conf 2> /dev/null \
+  CONFIG=$( grep -h '^[^#]' \
+                /etc/jail.conf \
+                /etc/jail.conf.d/* \
+                "${BAST_DIR}"/jails/*/jail.conf 2> /dev/null \
               | grep -A 512 -E "[[:space:]]*${JAIL}*[[:space:]]*\{" \
               | grep -B 512 -m 1 ".*[[:space:]]*\}[[:space:]]*$" )
 
-  # FIND JAIL DIR
+  # FIND DIR FOR RUNNING JAIL
   DIR=$( echo "${JLS}" | awk '{print $NF}' | grep -E -e "/${JAIL}$" -e "/${JAIL}/root" )
 
+  # FIND DIR FOR STOPPED JAIL
   if [ "${DIR}" = "" ]
   then
     DIR=$( grep -h '^[^#]' \
               /etc/jail.conf \
               /etc/jail.conf.d/* \
               "${BAST_DIR}"/jails/*/jail.conf 2> /dev/null \
-              | grep -A 512 -h -E '[[:alnum:]][[:space:]]\{' \
+              | grep -A 512 -h -E "${JAIL}[[:space:]]\{" \
               | grep -m 1 path \
               | awk '{print $NF}' \
               | tr -d ';' \
@@ -223,11 +263,11 @@ do
 
   # FIND JAIL IP(s)
   IPS=$( jexec ${JAIL} netstat -Win -f inet 2> /dev/null \
-            | sed 1d \
-            | awk '{print $3}' \
-            | grep -v '127.0.0.0/8' \
-            | tr '\n' '+' \
-            | sed '$s/.$//' )
+           | sed 1d \
+           | awk '{print $4}' \
+           | grep -v '127.0.0.1' \
+           | tr '\n' '+' \
+           | sed '$s/.$//' )
 
   # FIND JAIL TYPE
   TYPE=$( jexec ${JAIL} sysctl -n security.jail.vnet 2> /dev/null )
@@ -330,7 +370,7 @@ CPU_RAM
   [ "${RAM}"   = "" ] && RAM='-'
 
   # PRING GATHERED JAIL INFORMATION
-  printf "%${WIDTH_END}s %3s %5s %6s %4s %6s %-$(( ${WIDTH_END} + 6 ))s %10s %s\n" ${JAIL} ${JID} ${CPU} ${RAM} ${TYPE} ${VER} ${DIR} ${IFACE} ${IPS}
+  echo ${JAIL} ${JID} ${CPU} ${RAM} ${TYPE} ${VER} ${DIR} ${IFACE} ${IPS}
 
   # UNSET VARIABLES FOR NEXT LOOP
   unset JAIL JID TYPE VER DIR IFACE IPS CPU RAM
@@ -338,3 +378,47 @@ CPU_RAM
 done << JAILS
   ${JAILS}
 JAILS
+
+# OUTPUT END
+) | awk '{
+  # FIND LENGTH FOR EACH COLUMN
+  for(L = 1; L <= NF; L++) {
+    if (length($L) > MAX[L]) {
+      MAX[L] = length($L)
+    }
+  }
+
+  # STORE EACH COLUMN LENGTH
+  for(R = 1; R <= NF; R++) {
+    ROW[NR, R] = $R
+  }
+  COLS = NF
+  ROWS = NR
+}
+
+END {
+  # BUILD FORMAT STRING
+  FORMAT = ""
+  for(C = 1; C <= COLS; C++) {
+    if (C <= 4) {
+      FORMAT = FORMAT "%" MAX[C] + 1 "s"
+    } else {
+      # ADD SPACE BETWEEN 4TH AND 5TH COLUMNS
+      if (C == 5) {
+        FORMAT = FORMAT " "
+      }
+      FORMAT = FORMAT "%-" MAX[C] + 1 "s"
+    }
+  }
+  FORMAT = FORMAT "\n"
+
+  # PRINT OUTPUT
+  for(R = 1; R <= ROWS; R++) {
+    ARGS = ""
+    for(C = 1; C <= COLS; C++) {
+      ARGS = ARGS sprintf("%s ", ROW[R, C])
+    }
+    N = split(ARGS, O)
+    printf FORMAT, O[1], O[2], O[3], O[4], O[5], O[6], O[7], O[8], O[9]
+  }
+}'

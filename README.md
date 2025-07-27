@@ -36,12 +36,13 @@ Usage `help` info from the `jmore(8)` command below.
 ```
 % jmore help
 usage:
-  jmore            list jail(8) containers
-  jmore -a         list jail(8) containers with all IP(s)
-  jmore -h         show help
-  jmore --help     show help
-  jmore help       show help
-  jmore version    show version
+  jmore              list jail(8) containers
+  jmore -a           list jail(8) containers with all IP(s)
+  jmore -d INTERVAL  run 'jmore' every INTERVAL seconds like top(1)
+  jmore -h           show help
+  jmore --help       show help
+  jmore help         show help
+  jmore version      show version
 
 manage:
   jmore <JAILNAME> start
@@ -72,7 +73,7 @@ shorts:
   __/  //__/__/__/ \____//__/   \____/  \_\\____//_/
  /____/
 
-jmore(8) 0.3 2025/07/23
+jmore(8) 0.4 2025/07/26
 
 ```
 
@@ -80,19 +81,19 @@ Example output from `jmore(8)` listing usage.
 
 ```
 % jmore
-     JAIL JID CPU/% RAM/mb TYPE    VER DIR                  IFACE IP(s)
-  classic   7   0.0   18.0  std 13.2-R /jail/classic          em0 10.0.0.199/32
- ctld-two   -   0.0    0.0 vnet 13.2-R /jail/ctld-two      ${if}b -
-     ctld   -   0.0    0.0 vnet 13.2-R /jail/ctld          ${if}b -
- fbsdjail   -   0.0    0.0  std 13.1-R /jail/fbsdjail       wlan0 10.0.0.43
-    iscsi   -   0.0    0.0 vnet 13.2-R /jail/iscsi         ${if}b -
-joudriere   5   0.0   32.0 vnet 14.3-R /jail/joudriere  epair234b 10.1.1.0/24
-minecraft   8   1.1 1069.3  std 14.2-R /jail/minecraft        em0 10.0.0.210/32
-    minio   3   0.0  359.2  std 14.0-R /jail/minio            em0 10.0.0.133/32
-     nfsd   -   0.0    0.0 vnet 14.1-R /jail/nfsd          ${if}b -
-    other   2   0.0    5.0  std 14.1-R /jail/other            em0 10.0.0.199/32
-sambajail   -   0.0    0.0 vnet 14.1-R /jail/sambajail     ${if}b -
-    unfs3   4   0.0   10.2 vnet 14.1-R /jail/unfs3       epair88b 10.1.1.0/24
+     JAIL JID CPU/% RAM/mb TYPE    VER DIR                 IFACE IP(s)
+  classic   7   0.0   18.0  std 13.2-R /jail/classic         em0 10.0.0.199
+ ctld-two   -   0.0    0.0 vnet 13.2-R /jail/ctld-two     ${if}b -
+     ctld   -   0.0    0.0 vnet 13.2-R /jail/ctld         ${if}b -
+ fbsdjail   -   0.0    0.0  std 13.1-R /jail/fbsdjail      wlan0 10.0.0.43
+    iscsi   -   0.0    0.0 vnet 13.2-R /jail/iscsi        ${if}b -
+joudriere   5   0.0   32.0 vnet 14.3-R /jail/joudriere epair234b 10.1.1.0
+minecraft   8   1.1 1069.3  std 14.2-R /jail/minecraft       em0 10.0.0.210
+    minio   3   0.0  359.2  std 14.0-R /jail/minio           em0 10.0.0.133
+     nfsd   -   0.0    0.0 vnet 14.1-R /jail/nfsd         ${if}b -
+    other   2   0.0    5.0  std 14.1-R /jail/other           em0 10.0.0.199
+sambajail   -   0.0    0.0 vnet 14.1-R /jail/sambajail    ${if}b -
+    unfs3   4   0.0   10.2 vnet 14.1-R /jail/unfs3      epair88b 10.1.1.0
 ```
 
 EOF
