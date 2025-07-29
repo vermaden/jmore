@@ -150,7 +150,7 @@ case ${#} in
       echo "  __/  //__/__/__/ \\____//__/   \\____/  \\_\\\\____//_/"
       echo " /____/"
       echo
-      echo "jmore(8) 0.4 2025/07/26"
+      echo "jmore(8) 0.5 2025/07/29"
       echo
       exit 0
     fi
@@ -171,7 +171,7 @@ case ${#} in
       (d|stop)   ${DOAS} service jail onestop    ${1} ;;
       (s|status) ${DOAS} service jail onestatus  ${1} ;;
       (c|console|shell|jexec)
-        if ! jls -j bsdinstalljail 1> /dev/null 2> /dev/null
+        if ! jls -j ${1} 1> /dev/null 2> /dev/null
         then
           echo "NOPE: jail '${1}' is not running"
           exit 1
@@ -190,7 +190,8 @@ esac
 
 # SETTINGS AND INITIAL INFORMATION GATHERING
 JLS=$( jls 2> /dev/null )
-IFCONFIG=$( netstat -Win -f inet | sed 1d | awk '{print $1}' | uniq | tr '\n' ' ' )
+NETSTAT=$( netstat -Win -f inet )
+IFCONFIG=$( echo "${NETSTAT}" | sed 1d | awk '{print $1}' | uniq | tr '\n' ' ' )
 
 # FIND AND SET bastille_prefix FOR BastilleBSD JAILS
 eval $( grep '^[^#]' /usr/local/etc/bastille/bastille.conf 2> /dev/null \
@@ -261,8 +262,9 @@ do
     DIR="[GONE]${DIR}"
   fi
 
+  NETSTAT_JAIL=$( ${DOAS} jexec ${JAIL} netstat -Win -f inet 2> /dev/null )
   # FIND JAIL IP(s)
-  IPS=$( jexec ${JAIL} netstat -Win -f inet 2> /dev/null \
+  IPS=$( echo "${NETSTAT_JAIL}" \
            | sed 1d \
            | awk '{print $4}' \
            | grep -v '127.0.0.1' \
@@ -270,13 +272,13 @@ do
            | sed '$s/.$//' )
 
   # FIND JAIL TYPE
-  TYPE=$( jexec ${JAIL} sysctl -n security.jail.vnet 2> /dev/null )
+  TYPE=$( ${DOAS} jexec ${JAIL} sysctl -n security.jail.vnet 2> /dev/null )
 
   case ${TYPE} in
 
     (1)
       TYPE=vnet
-      IFACE=$( jexec ${JAIL} netstat -Win -f inet | sed 1d | grep -v '127.0.0.0/8' | awk '{print $1}'  )
+      IFACE=$( echo "${NETSTAT_JAIL}" | sed 1d | grep -v '127.0.0.0/8' | awk '{print $1}'  )
 
       case ${FULL_LISTING} in
 
@@ -298,7 +300,7 @@ do
       do
         while read INTERFACE
         do
-          if netstat -Win -f inet | sed 1d | grep -v '127.0.0.0/8' | grep -q -- "- ${IP} "
+          if echo "${NETSTAT}" | sed 1d | grep -v '127.0.0.0/8' | grep -q -- "- ${IP} "
           then
             IFACE=${INTERFACE}
             break
@@ -333,7 +335,7 @@ EOF_IP
   # IF JAIL IS NOT RUNNING THEN SET JID TO '-' VALUE
   if [ "${JID}" = "" ]
   then
-    if ! jexec ${JAIL} echo / 1> /dev/null 2> /dev/null
+    if ! ${DOAS} jexec ${JAIL} echo / 1> /dev/null 2> /dev/null
     then
       JID=-
     fi
@@ -342,7 +344,7 @@ EOF_IP
   # CALCULATE CPU/RAM USAGE
   RAM=0
   CPU=0
-  RESOURCES=$( ps -J ${JID} -o 'rss,%cpu' 2> /dev/null | sed 1d )
+  RESOURCES=$( ${DOAS} ps -J ${JID} -o 'rss,%cpu' 2> /dev/null | sed 1d )
   if [ "${RESOURCES}" != "" ]
   then
     while read RSS PER
@@ -380,7 +382,8 @@ done << JAILS
 JAILS
 
 # OUTPUT END
-) | awk '{
+) | awk \
+'{
   # FIND LENGTH FOR EACH COLUMN
   for(L = 1; L <= NF; L++) {
     if (length($L) > MAX[L]) {
@@ -422,3 +425,4 @@ END {
     printf FORMAT, O[1], O[2], O[3], O[4], O[5], O[6], O[7], O[8], O[9]
   }
 }'
+
