@@ -207,7 +207,7 @@ fi
 # GET LIST OF JAILS NAMES
 JAILS=$( grep -h '^[^#]' \
            /etc/jail.conf \
-           /etc/jail.conf.d/* \
+           /etc/jail.conf.d/*.conf \
            "${BAST_DIR}"/jails/*/jail.conf 2> /dev/null \
            | grep -h -E '[[:space:]]*[[:alnum:]][[:space:]]*\{' \
            | tr -d '\ \t{' )
@@ -225,7 +225,7 @@ do
   # CHECK JAILS CONFIGS
   CONFIG=$( grep -h '^[^#]' \
                 /etc/jail.conf \
-                /etc/jail.conf.d/* \
+                /etc/jail.conf.d/*.conf \
                 "${BAST_DIR}"/jails/*/jail.conf 2> /dev/null \
               | grep -A 512 -E "[[:space:]]*${JAIL}*[[:space:]]*\{" \
               | grep -B 512 -m 1 ".*[[:space:]]*\}[[:space:]]*$" )
@@ -238,7 +238,7 @@ do
   then
     DIR=$( grep -h '^[^#]' \
               /etc/jail.conf \
-              /etc/jail.conf.d/* \
+              /etc/jail.conf.d/*.conf \
               "${BAST_DIR}"/jails/*/jail.conf 2> /dev/null \
               | grep -A 512 -h -E "${JAIL}[[:space:]]\{" \
               | grep -m 1 path \
