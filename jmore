@@ -276,6 +276,7 @@ do
 
   case ${TYPE} in
 
+    # VNET JAIL
     (1)
       TYPE=vnet
       IFACE=$( echo "${NETSTAT_JAIL}" | sed 1d | grep -v '127.0.0.0/8' | awk '{print $1}'  )
@@ -294,13 +295,14 @@ do
       esac
       ;;
 
+    # CLASSIC JAIL
     (0)
       TYPE=std
       while read IP
       do
         while read INTERFACE
         do
-          if echo "${NETSTAT}" | sed 1d | grep -v '127.0.0.0/8' | grep -q -- "- ${IP} "
+          if echo "${NETSTAT}" | grep -v '127.0.0.0/8' | grep -q -E -- "${IP}/"
           then
             IFACE=${INTERFACE}
             break
@@ -313,17 +315,35 @@ EOF_INTERFACE
 EOF_IP
       ;;
 
+    # MORE DETECTION NEEDED
     (*)
+      # MORE VNET JAIL
       if echo "${CONFIG}" | grep -q 'vnet.interface'
       then
         TYPE=vnet
         IFACE=$( echo "${CONFIG}" | grep 'vnet.interface' | awk '{print $NF}' | tr -d ';"' | tr ',' '\n' )
         __interfaces_limit
       else
+      # MORE CLASSIC JAIL
         TYPE=std
-        IFACE=$( echo "${CONFIG}" | grep 'interface' | awk '{print $NF}' | tr -d ';' | tr ',' '\n' )
-        __interfaces_limit
-        IPS=$( echo "${CONFIG}" | grep '\.addr' | awk '{print $NF}' | tr -d ';' )
+        IFTYPE=$( echo "${CONFIG}" | grep 'ip4.addr' )
+        case ${IFTYPE} in
+          # PART FOR THIS FORMAT BELOW
+          # ip4.addr = em0|10.0.0.1;
+          (*\|*)
+            IFACE=$( echo "${IFTYPE}" | awk -F '=' '{print $2}' )
+            IPS=$(   echo "${IFACE}"  | awk -F '|' '{print $2}' | tr -c -d '0-9.' )
+            IFACE=$( echo "${IFACE}"  | awk -F '|' '{print $1}' )
+            ;;
+          # PART FOR THIS FORMAT BELOW
+          # interface = em0;
+          # ip4.addr = 10.0.0.1;
+          (*)
+            IFACE=$( echo "${CONFIG}" | grep 'interface' | awk '{print $NF}' | tr -d ';' | tr ',' '\n' )
+            __interfaces_limit
+            IPS=$( echo "${CONFIG}" | grep '\.addr' | awk '{print $NF}' | tr -d ';' )
+            ;;
+        esac
       fi
       ;;
 
