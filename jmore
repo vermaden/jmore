@@ -126,7 +126,12 @@ elif which sudo 1> /dev/null 2> /dev/null
 then
   DOAS=sudo
 else
-  DOAS=''
+  # CHECK USER WITH whoami(1)
+  if [ "$( whoami )" != "root" ]
+  then
+    echo "NOPE: you need to be 'root' to use jmore(8) tool"
+    exit 1
+  fi
 fi
 
 # CHECK PASSED ARGUMENTS
@@ -150,7 +155,7 @@ case ${#} in
       echo "  __/  //__/__/__/ \\____//__/   \\____/  \\_\\\\____//_/"
       echo " /____/"
       echo
-      echo "jmore(8) 0.5 2025/09/24"
+      echo "jmore(8) 0.5 2025/10/30"
       echo
       exit 0
     fi
