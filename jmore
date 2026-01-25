@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright (c) 2023-2025 Slawomir Wojciech Wojtczak (vermaden)
+# Copyright (c) 2023-2026 Slawomir Wojciech Wojtczak (vermaden)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -116,19 +116,23 @@ then
   exit 0
 fi
 
-# CHECK doas(1) AND/OR sudo(8) EXISTENCE
-unalias doas
-unalias sudo
-if which doas 1> /dev/null 2> /dev/null
+# CHECK USER WITH whoami(1)
+if [ "$( whoami )" = "root" ]
 then
-  DOAS=doas
-elif which sudo 1> /dev/null 2> /dev/null
-then
-  DOAS=sudo
+  : # CONTINUE AS 'root' USER
 else
-  # CHECK USER WITH whoami(1)
-  if [ "$( whoami )" != "root" ]
+  # CHECK doas(1) AND/OR sudo(8) EXISTENCE
+  unalias doas
+  unalias sudo
+  if which doas 1> /dev/null 2> /dev/null
   then
+    # CONTINUE USING doas(1)
+    DOAS=doas
+  elif which sudo 1> /dev/null 2> /dev/null
+  then
+    # CONTINUE USING sudo(8)
+    DOAS=sudo
+  else
     echo "NOPE: you need to be 'root' to use jmore(8) tool"
     exit 1
   fi
@@ -155,7 +159,7 @@ case ${#} in
       echo "  __/  //__/__/__/ \\____//__/   \\____/  \\_\\\\____//_/"
       echo " /____/"
       echo
-      echo "jmore(8) 0.5 2025/10/30"
+      echo "jmore(8) 0.5 2026/01/25"
       echo
       exit 0
     fi
