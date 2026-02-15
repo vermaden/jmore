@@ -199,8 +199,9 @@ esac
 
 # SETTINGS AND INITIAL INFORMATION GATHERING
 JLS=$( jls 2> /dev/null )
-NETSTAT=$( netstat -Win -f inet )
-IFCONFIG=$( echo "${NETSTAT}" | sed 1d | awk '{print $1}' | uniq | tr '\n' ' ' )
+# MOD: Get both IPv4 and IPv6 from host
+NETSTAT=$( netstat -Win -f inet; netstat -Win -f inet6 )
+IFCONFIG=$( echo "${NETSTAT}" | grep -v '^Name' | awk '{print $1}' | uniq | tr '\n' ' ' )
 
 # FIND AND SET bastille_prefix FOR BastilleBSD JAILS
 eval $( grep '^[^#]' /usr/local/etc/bastille/bastille.conf 2> /dev/null \
@@ -280,12 +281,14 @@ do
     DIR="[GONE]${DIR}"
   fi
 
-  NETSTAT_JAIL=$( ${DOAS} jexec ${JAIL} netstat -Win -f inet 2> /dev/null )
+  # MOD: Run netstat for both inet and inet6 inside the jail
+  NETSTAT_JAIL=$( ${DOAS} jexec ${JAIL} sh -c 'netstat -Win -f inet; netstat -Win -f inet6' 2> /dev/null )
+  
   # FIND JAIL IP(s)
+  # MOD: awk first to isolate address, then filter. This properly catches ^fe80:
   IPS=$( echo "${NETSTAT_JAIL}" \
-           | sed 1d \
-           | awk '{print $4}' \
-           | grep -v '127.0.0.1' \
+           | awk '$1 != "Name" {print $4}' \
+           | grep -v -E '127.0.0.1|::1|^fe80:' \
            | tr '\n' '/' \
            | sed '$s/.$//' )
 
@@ -297,7 +300,9 @@ do
     # VNET JAIL
     (1)
       TYPE=vnet
-      IFACE=$( echo "${NETSTAT_JAIL}" | sed 1d | grep -v '127.0.0.0/8' | awk '{print $1}'  )
+      # MOD: Filter via awk to exclude loopback/link-local addresses from creating
+      # interface entries, and then use 'sort -u' to remove duplicate interface names
+      IFACE=$( echo "${NETSTAT_JAIL}" | awk '$1 != "Name" && $4 !~ /^(127\.|::1|fe80:)/ {print $1}' | sort -u )
 
       case ${FULL_LISTING} in
 
@@ -320,7 +325,7 @@ do
       do
         while read INTERFACE
         do
-          if echo "${NETSTAT}" | grep -v '127.0.0.0/8' | grep -q -E -- "${IP}/"
+          if echo "${NETSTAT}" | grep -v -E '127.0.0.0/8|::1|^fe80:' | grep -q -E -- "${IP}"
           then
             IFACE=${INTERFACE}
             break
@@ -344,13 +349,15 @@ EOF_IP
       else
       # MORE CLASSIC JAIL
         TYPE=std
-        IFTYPE=$( echo "${CONFIG}" | grep 'ip4.addr' )
+        # MOD: Look for both ip4.addr and ip6.addr
+        IFTYPE=$( echo "${CONFIG}" | grep -E 'ip4.addr|ip6.addr' )
         case ${IFTYPE} in
           # PART FOR THIS FORMAT BELOW
           # ip4.addr = em0|10.0.0.1;
           (*\|*)
             IFACE=$( echo "${IFTYPE}" | awk -F '=' '{print $2}' )
-            IPS=$(   echo "${IFACE}"  | awk -F '|' '{print $2}' | tr -c -d '0-9.' )
+            # MOD: Update tr to include colons and hex chars for IPv6
+            IPS=$(   echo "${IFACE}"  | awk -F '|' '{print $2}' | tr -c -d '0-9.a-fA-F:' )
             IFACE=$( echo "${IFACE}"  | awk -F '|' '{print $1}' )
             ;;
           # PART FOR THIS FORMAT BELOW
@@ -359,7 +366,8 @@ EOF_IP
           (*)
             IFACE=$( echo "${CONFIG}" | grep 'interface' | awk '{print $NF}' | tr -d ';' | tr ',' '\n' )
             __interfaces_limit
-            IPS=$( echo "${CONFIG}" | grep '\.addr' | awk '{print $NF}' | tr -d ';' )
+            # MOD: Update tr to include colons and hex chars for IPv6
+            IPS=$( echo "${CONFIG}" | grep -E '\.addr' | awk '{print $NF}' | tr -d ';' )
             ;;
         esac
       fi
